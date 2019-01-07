@@ -31,12 +31,14 @@ public class RandomizedSetsTest extends BaseTest {
 	private static final boolean runAll = false;
 	private static final boolean debug = false;
 	private static final boolean verbose = true;
+	private static final int percentage = 30;
 
 	@BeforeClass
 	static void beforeClass() {
 		testRandomizer.setRunAll(RandomizedSetsTest.runAll);
 		testRandomizer.setVerbose(RandomizedSetsTest.verbose);
 		testRandomizer.setDebug(RandomizedSetsTest.debug);
+		testRandomizer.setPercentage(percentage);
 		testRandomizer.setInventoryFilePath("src/main/resources/tests.yaml");
 		testRandomizer.loadInventory();
 	}
@@ -50,12 +52,8 @@ public class RandomizedSetsTest extends BaseTest {
 		if (debug) {
 			System.err.println("Called Test Ramdomizer from method.");
 		}
-		if (!testRandomizer.decide(testName)) {
-			if (debug) {
-				System.err.println(String.format("will skip %s", testName));
-			}
-			throw new SkipException("skipping " + testName);
-		}
+		testRandomizer.decide(testName);
+		// perform an actual test
 		assertTrue(true);
 	}
 

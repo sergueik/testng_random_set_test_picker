@@ -59,7 +59,7 @@ public class RandomizedSetsTest extends BaseTest {
 The logic of `decide` method is currently very elementary:
 ```java
 public boolean decide(String methodName) {
-  return (new Random().nextInt() % 10 != 0 & !runAll) ? false : true;
+  return runAll ? true : (Math.random() > 0.01 * (float) percentage) ? false : true;
   // inventory action not shown
 }
 ```

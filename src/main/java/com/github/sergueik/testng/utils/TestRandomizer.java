@@ -36,6 +36,7 @@ public class TestRandomizer {
 	private static Yaml yaml = null;
 	private String inventoryFilePath = null;
 	private static Map<String, Object> testInventoryData = new HashMap<>();
+	private int percentage = 10;
 
 	public void setInventoryFilePath(String value) {
 		this.inventoryFilePath = value;
@@ -63,16 +64,10 @@ public class TestRandomizer {
 		return instance;
 	}
 
-	public boolean decide(String methodName) {
-		// TODO: flexible percentage
-		boolean status = (new Random().nextInt() % 10 != 0 & !runAll) ? false
-				: true;
-		// status = false;
-		/*
-		if (!status) {
-			throw new SkipException("Skipping " + methodName);
-		}
-		*/
+	// https://stackoverflow.com/questions/21591712/how-do-i-use-testng-skipexception
+	public void decide(String methodName) {
+		boolean status = runAll ? true
+				: (Math.random() > 0.01 * (float) percentage) ? false : true;
 		if (yaml == null) {
 			loadInventory();
 		}
@@ -81,26 +76,22 @@ public class TestRandomizer {
 			System.err.println(
 					"Decided to " + (status ? "run" : "skip") + " " + methodName);
 		}
-		return status;
+		if (!status) {
+			throw new SkipException("Skipping " + methodName);
+		}
 	}
 
-	// NOTE: do not throw from here or all subsequent tests would be skipped
-	// https://stackoverflow.com/questions/21591712/how-do-i-use-testng-skipexception
-	public void badDecision(String methodName) {
-
-		if (new Random().nextInt() % 10 != 0 & !runAll) {
-			if (debug) {
-				System.err.println("Decided to skip" + methodName);
-			}
-			throw new SkipException("Decided to skip " + methodName);
-		}
-		if (yaml == null) {
-			loadInventory();
-		}
-		testInventoryData.put(methodName, true);
+	public int getPercentage() {
+		return percentage;
 	}
 
-	// could be more accurately named `skipAllStartingFromTestFour`
+	public void setPercentage(int percentage) {
+		this.percentage = percentage;
+	}
+
+	// Example to illustrate that throw SkipException from @Before stops the
+	// specific test and also quits to none of
+	// subsequent tests would be run
 	public void skipTestFour(String methodName) {
 
 		if (debug) {
@@ -152,7 +143,9 @@ public class TestRandomizer {
 	}
 
 	public void printInventory() {
-		System.err.println("Inventory tests run:");
+		System.err
+				// literal percent sign escaped with percent sign
+				.println(String.format("Inventory tests run: (%d %%)", percentage));
 		listExecutedTests().stream().forEach(System.err::println);
 	}
 

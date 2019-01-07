@@ -15,4 +15,5 @@
 *.unc-backup~
 *.uncrustify
 *~
-
+# YAML file used for inventory being overwritten during the test 
+src/main/resources/tests.yaml
