@@ -2,7 +2,9 @@
 
 This directory contains a custom Randomize Test class suggested in the forum [Automatically select 10% round-robin subset of the tests during run](https://automated-testing.info/t/testng-zapusk-10-testov-s-randomnoj-vyborkoj/22059/7) (in Russian).
 
-### Usage
+[![BuildStatus](https://travis-ci.org/sergueik/testng_random_set_test_picker.svg?branch=master)](https://travis-ci.org/sergueik/testng_random_set_test_picker)
+
+### Overview
 
 It turns out that the advice provided in the forum is incorrect at least witn __TestNg__ version __6.14.3__.
 
@@ -85,18 +87,32 @@ ator@1175e2db
 Inventory tests run:
 testOne
 ```
+### Usage
 ### Work in Progress
 
 With the realistic number of tests, and a random `decide` method, inventory  is critical: scanning test log or Alure report does not scale too well.
+With the method `dumpInventory` one can currently write the YAML file to the 
+path specified through the property `inventoryFilePath`, overwriting that file, without presering the historic data:
+```yaml
+---
+testOne: false
+testSeven: false
+testThree: false
+testSix: true
+testNine: false
+testFour: true
+testEight: false
+testFive: false
+testTwo: false
+testTen: true
+```
 
-Persistent inventory into a YAML/csv/spreadsheet/ELK is a work in progress.
+Persisten: inventory into a csv/spreadsheet/ELK is a work in progress.
 
 ### See Also
  * discussion of `SkipException` in [stackoverflow](https://stackoverflow.com/questions/21591712/how-do-i-use-testng-skipexception)
- * customized TestNG [report](https://github.com/djangofan/testng-custom-report-example)illustrating skip techniques
- * [snateyaml documentation](https://code.google.com/archive/p/snakeyaml/wikis/Documentation.wiki)
- * [snakeyaml documentaation](https://bitbucket.org/asomov/snakeyaml/wiki/Documentation)
- * [some examples copied from documentaion](https://www.programcreek.com/java-api-examples/?api=org.yaml.snakeyaml.DumperOptions)
+ * customized TestNG [report](https://github.com/djangofan/testng-custom-report-example) illustrating skip techniques
+ * [some examples copied from snakeyaml documentaion](https://www.programcreek.com/java-api-examples/?api=org.yaml.snakeyaml.DumperOptions)
 
 ### License
 This project is licensed under the terms of the MIT license.
