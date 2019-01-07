@@ -63,7 +63,7 @@ public boolean decide(String methodName) {
   // inventory action not shown
 }
 ```
-This strategy leads toroughly 10% of tests chosen randomly to run in every run:
+This strategy leads to roughly `percentage` (default is `10%`) of test methods chosen randomly to run in every run:
 ```sh
 -------------------------------------------------------
  T E S T S

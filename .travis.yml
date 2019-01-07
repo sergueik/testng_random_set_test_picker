@@ -1,0 +1,12 @@
+language: java
+script: mvn test
+install: mvn install -DskipTests=true -Dgpg.skip=true -Dmaven.javadoc.skip=true -B -V
+jdk:
+  - oraclejdk8
+notifications:
+  email:
+    on_success: never
+    on_failure: change
+
+after_success:
+  - mvn clean test cobertura:cobertura coveralls:report

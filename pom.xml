@@ -6,6 +6,7 @@
   <packaging>jar</packaging>
   <version>0.2-SNAPSHOT</version>
   <name>app</name>
+  <description>Custom random test class choser</description>
   <url>http://maven.apache.org</url>
   <developers>
     <developer>
@@ -94,5 +95,16 @@
       </plugin>
     </plugins>
   </build>
-  <description>Custom random test class choser</description>
+  <licenses>
+    <license>
+      <name>MIT License</name>
+      <url>https://github.com/sergueik/testng_random_set_test_picker/blob/master/LICENSE</url>
+    </license>
+  </licenses>
+  <distributionManagement>
+    <repository>
+      <id>ossrh</id>
+      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+    </repository>
+  </distributionManagement>
 </project>
