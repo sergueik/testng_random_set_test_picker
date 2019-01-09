@@ -8,18 +8,18 @@ This directory contains a custom Randomize Test class suggested in the forum [Au
 
 It turns out that the advice provided in the forum is incorrect at least witn __TestNg__ version __6.14.3__.
 
-Throwing the `new` `org.testng.SkipException` from the method annotated with `@BeforeMethod` has a horrible side effect: not only one specic test will be skipped but exception would completely abort the flow of test execution. In other words all tests following the intended to skip in their normal (alphabetical, unless specified otherwise) order won't be executed. None of methods annotated with various `@After` scopes will be executed either.
+Throwing the `new` `org.testng.SkipException` from the method annotated with `@BeforeMethod` has a horrible side effect: not only one specific intended to get skipper test ends up being skipped but the exception completely aborts the flow of test execution. In other words all tests starting with the intended to skip in their normal (alphabetical, unless specified otherwise) order will be silently skipped. None of methods annotated with various `@After` scopes will be executed either.
 
-This scenario is illustrated by the class `SkipRestOfTestSetTest` in the current project. The class contains a set of dummy tests named `testTwentyOne`, `testTwentyTwo`, through `testTwentyNine`, and exercises the special method `skipTestFour` in the designated class`TestRandomizer` class.
+This scenario is illustrated in this project by the class `SkipRestOfTestSetTest` in the current project. The class contains a set of dummy methods named `testTwentyOne`, `testTwentyTwo`, through `testTwentyNine`, and exercises the bad implementation of the plan to skip the "testWentyFour" by invoking a special method `skipTestFour` in the designated class `TestRandomizer` class that would throw the exception.
 
-Notably the `skipTestFour` would better be named `skipAllStartingFromTestFour` since the exception thrown from that method tha is intended to have one specific test named `testTwentyFour` skipped,
+Notably the `skipTestFour` would better be named `skipAllStartingFromTestFour` since the exception side effect:
 ```java
 public void skipTestFour(String methodName) {
   if (debug) {
     System.err.println("Examine method:   " + methodName);
   }
 
-  if (methodName.matches("(?i).*four.*")) {
+  if (methodName.matches(".*(?i:FOUR).*")) {
     if (debug) {
       System.err.println("Decided to skip" + methodName);
     }
@@ -91,7 +91,7 @@ testOne
 ### Work in Progress
 
 With the realistic number of tests, and a random `decide` method, inventory  is critical: scanning test log or Alure report does not scale too well.
-With the method `dumpInventory` one can currently write the YAML file to the 
+With the method `dumpInventory` one can currently write the YAML file to the
 path specified through the property `inventoryFilePath`, overwriting that file, without presering the historic data:
 ```yaml
 ---
@@ -106,6 +106,7 @@ testFive: false
 testTwo: false
 testTen: true
 ```
+`TestRandomizer` also creates an Excel 2007 spreadsheet `src/test/resources/TestData..xlsx' with test names and statuses in a new column (every run adds a column). This is wotk in progress.
 
 Persisten: inventory into a csv/spreadsheet/ELK is a work in progress.
 
