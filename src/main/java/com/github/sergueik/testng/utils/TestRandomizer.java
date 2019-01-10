@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Map.Entry;
 import java.util.Random;
 import java.util.function.Predicate;
@@ -261,7 +262,8 @@ public class TestRandomizer {
 		}
 		setTableData(tableData);
 		try {
-			readSpreadsheet();
+			List<Map<Integer, String>> existingData = new ArrayList<>();
+			readSpreadsheet(Optional.of(existingData));
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -353,10 +355,12 @@ public class TestRandomizer {
 		} catch (IOException e) {
 		}
 		File file = new File(saveFilePath);
-		if (debug) {
-			if (file.delete()) {
+		if (file.delete()) {
+			if (debug) {
 				System.out.println("File " + saveFilePath + " deleted successfully");
-			} else {
+			}
+		} else {
+			if (debug) {
 				System.out.println("Failed to delete the file " + saveFilePath);
 			}
 		}
@@ -366,18 +370,27 @@ public class TestRandomizer {
 		tableData = data;
 	}
 
-	// TODO: Optional argument to store the data read
 	private void readSpreadsheet() throws IOException {
+		readSpreadsheet(null);
+	}
+
+	// TODO: Optional argument to store the data read
+	private void readSpreadsheet(Optional<List<Map<Integer, String>>> data)
+			throws IOException {
+
+		List<Map<Integer, String>> collector = (data.isPresent()) ? data.get()
+				: new ArrayList<>();
+
 		if (sheetFormat.matches("(?i:Excel 2007)")) {
 			if (debug) {
 				System.err.println("Reading Excel 2007 data sheet.");
 			}
-			readXLSXFile();
+			readXLSXFile(collector);
 		} else if (sheetFormat.matches("(?i:Excel 2003)")) {
 			if (debug) {
 				System.err.println("Reading Excel 2003 data sheet.");
 			}
-			readXLSFile();
+			readXLSFile(collector);
 		} else {
 			if (debug) {
 				System.err.println("Unrecognized data sheet format: " + sheetFormat);
@@ -385,7 +398,7 @@ public class TestRandomizer {
 		}
 	}
 
-	private void readXLSFile() throws IOException {
+	private void readXLSFile(List<Map<Integer, String>> data) throws IOException {
 
 		InputStream ExcelFileToRead = new FileInputStream(excelFileName);
 		HSSFWorkbook wb = new HSSFWorkbook(ExcelFileToRead);
@@ -417,7 +430,7 @@ public class TestRandomizer {
 		}
 	}
 
-	private void readXLSXFile() throws IOException {
+	private void readXLSXFile(List<Map<Integer, String>> data) throws IOException {
 
 		InputStream ExcelFileToRead = new FileInputStream(excelFileName);
 		XSSFWorkbook wb = new XSSFWorkbook(ExcelFileToRead);
@@ -463,7 +476,7 @@ public class TestRandomizer {
 		}
 
 	}
-	
+
 	private void writeXLSFile() throws IOException {
 
 		HSSFWorkbook wbObj = new HSSFWorkbook();
