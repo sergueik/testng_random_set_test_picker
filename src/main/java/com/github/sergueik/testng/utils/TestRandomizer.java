@@ -237,11 +237,11 @@ public class TestRandomizer {
 			throw new RuntimeException(e);
 		}
 		columnHeaders = readColumnHeaders();
-		newColumnHeader = String.format("Column%d", columnHeaders.size());
+		newColumnHeader = String.format("Row %d", columnHeaders.size());
 		appendColumnHeader(newColumnHeader);
 		columnHeaders = readColumnHeaders();
 		if (debug) {
-			System.err.println("Appended new column: " + columnHeaders.toString());
+			System.err.println("Appended column: " + columnHeaders.toString());
 		}
 		setExcelFileName(spreadsheetFilePath);
 		setSheetName("Test Status");
@@ -378,28 +378,38 @@ public class TestRandomizer {
 	private void readSpreadsheet(Optional<List<Map<Integer, String>>> data)
 			throws IOException {
 
-		List<Map<Integer, String>> collector = (data.isPresent()) ? data.get()
+		List<Map<Integer, String>> dataCollector = (data.isPresent()) ? data.get()
 				: new ArrayList<>();
 
 		if (sheetFormat.matches("(?i:Excel 2007)")) {
 			if (debug) {
 				System.err.println("Reading Excel 2007 data sheet.");
 			}
-			readXLSXFile(collector);
+			readXLSXFile(dataCollector);
 		} else if (sheetFormat.matches("(?i:Excel 2003)")) {
 			if (debug) {
 				System.err.println("Reading Excel 2003 data sheet.");
 			}
-			readXLSFile(collector);
+			readXLSFile(dataCollector);
 		} else {
 			if (debug) {
 				System.err.println("Unrecognized data sheet format: " + sheetFormat);
+			}
+		}
+		if (debug) {
+			for (Map<Integer, String> rowData : dataCollector) {
+				for (Map.Entry<Integer, String> columnData : rowData.entrySet()) {
+					System.err.println(
+							columnData.getKey().toString() + " => " + columnData.getValue());
+				}
+				System.err.println("---");
 			}
 		}
 	}
 
 	private void readXLSFile(List<Map<Integer, String>> data) throws IOException {
 
+		Map<Integer, String> rowData = new HashMap<>();
 		InputStream ExcelFileToRead = new FileInputStream(excelFileName);
 		HSSFWorkbook wb = new HSSFWorkbook(ExcelFileToRead);
 		HSSFSheet sheet = wb.getSheetAt(0);
@@ -413,25 +423,40 @@ public class TestRandomizer {
 			row = (HSSFRow) rows.next();
 			Iterator<Cell> cells = row.cellIterator();
 
+			int cellNum = 0;
+			rowData = new HashMap<>();
 			while (cells.hasNext()) {
 
 				cell = (HSSFCell) cells.next();
 				CellType type = cell.getCellTypeEnum();
-
+				String cellValue = null;
 				if (type == org.apache.poi.ss.usermodel.CellType.STRING) {
-					System.err.println(cell.getStringCellValue() + " ");
+					cellValue = cell.getStringCellValue();
 				} else if (type == org.apache.poi.ss.usermodel.CellType.NUMERIC) {
-					System.err.println(cell.getNumericCellValue() + " ");
+					cellValue = String.format("%f", cell.getNumericCellValue());
 				} else {
-					System.err.println("? ");
+					cellValue = "?";
 					// TODO: Boolean, Formula, Errors
 				}
+				if (debug) {
+					if (debug) {
+						System.err.println("=>" + cellValue + " ");
+					}
+				}
+				rowData.put(cellNum, cellValue);
+				cellNum++;
+			}
+			data.add(rowData);
+			if (debug) {
+				System.err.println("");
 			}
 		}
 	}
 
-	private void readXLSXFile(List<Map<Integer, String>> data) throws IOException {
+	private void readXLSXFile(List<Map<Integer, String>> data)
+			throws IOException {
 
+		Map<Integer, String> rowData = new HashMap<>();
 		InputStream ExcelFileToRead = new FileInputStream(excelFileName);
 		XSSFWorkbook wb = new XSSFWorkbook(ExcelFileToRead);
 		XSSFWorkbook test = new XSSFWorkbook();
@@ -442,19 +467,30 @@ public class TestRandomizer {
 		while (rows.hasNext()) {
 			row = (XSSFRow) rows.next();
 			Iterator<Cell> cells = row.cellIterator();
+			int cellNum = 0;
+			rowData = new HashMap<>();
 			while (cells.hasNext()) {
+				String cellValue = null;
 				cell = (XSSFCell) cells.next();
 				CellType type = cell.getCellTypeEnum();
 				if (type == org.apache.poi.ss.usermodel.CellType.STRING) {
-					System.err.println(cell.getStringCellValue() + " ");
+					cellValue = cell.getStringCellValue();
 				} else if (type == org.apache.poi.ss.usermodel.CellType.NUMERIC) {
-					System.err.println(cell.getNumericCellValue() + " ");
+					cellValue = String.format("%f", cell.getNumericCellValue());
 				} else {
+					cellValue = "?";
 					// TODO: Boolean, Formula, Errors
-					System.err.println("? ");
 				}
+				if (debug) {
+					System.err.println("=>" + cellValue + " ");
+				}
+				rowData.put(cellNum, cellValue);
+				cellNum++;
 			}
-			System.err.println("");
+			data.add(rowData);
+			if (debug) {
+				System.err.println("");
+			}
 		}
 	}
 

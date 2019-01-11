@@ -29,7 +29,7 @@ public class RandomizedSetsTest extends BaseTest {
 	private static final TestRandomizer testRandomizer = TestRandomizer
 			.getInstance();
 	private static final boolean runAll = false;
-	private static final boolean debug = false;
+	private static final boolean debug = true;
 	private static final boolean verbose = true;
 	private static final int percentage = 30;
 
