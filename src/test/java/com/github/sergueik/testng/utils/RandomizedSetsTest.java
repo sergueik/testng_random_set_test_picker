@@ -29,7 +29,8 @@ public class RandomizedSetsTest extends BaseTest {
 	private static final TestRandomizer testRandomizer = TestRandomizer
 			.getInstance();
 	private static final boolean runAll = false;
-	private static final boolean debug = true;
+	private static final boolean debug = false;
+	private static boolean appendData = true;
 	private static final boolean verbose = true;
 	private static final int percentage = 30;
 
@@ -37,6 +38,7 @@ public class RandomizedSetsTest extends BaseTest {
 	static void beforeClass() {
 		testRandomizer.setRunAll(RandomizedSetsTest.runAll);
 		testRandomizer.setVerbose(RandomizedSetsTest.verbose);
+		testRandomizer.setAppendData(RandomizedSetsTest.appendData);
 		testRandomizer.setDebug(RandomizedSetsTest.debug);
 		testRandomizer.setPercentage(percentage);
 		testRandomizer.setInventoryFilePath("src/main/resources/tests.yaml");
@@ -114,6 +116,7 @@ public class RandomizedSetsTest extends BaseTest {
 	static void afterClass() {
 		testRandomizer.printInventory();
 		testRandomizer.dumpInventory();
+		testRandomizer.updateMultiRunInventory();
 	}
 
 }

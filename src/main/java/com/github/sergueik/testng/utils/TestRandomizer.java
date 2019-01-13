@@ -71,7 +71,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 public class TestRandomizer {
 
 	private boolean runAll;
-	private boolean appendData = false;
+	private boolean appendData = true;
 	private boolean debug = false;
 	private boolean verbose = false;
 	private static DumperOptions options = new DumperOptions();
@@ -241,6 +241,10 @@ public class TestRandomizer {
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	// supports last-run and keep-history invenories
+	public void updateMultiRunInventory() {
 		setExcelFileName(spreadsheetFilePath);
 		setSheetName("Test Status");
 		setSheetFormat("Excel 2007");
@@ -274,24 +278,28 @@ public class TestRandomizer {
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}
-			if (debug) {
+			if (verbose) {
 				System.err.println("Adding extra column");
+			}
 
-				tableData = new ArrayList<>(); // reset tableData
-				for (Map<Integer, String> rowData : existingData) {
-					String testMethodName = rowData.get(0); // "Test Method"
-					Integer newColumn = rowData.size();
-					if (testMethodName.matches("Test Method")) {
-						// continue;
-						rowData.put(rowData.size(), String.format("Run %d", newColumn));
-					} else {
+			tableData = new ArrayList<>(); // reset tableData
+			for (Map<Integer, String> rowData : existingData) {
+				String testMethodName = rowData.get(0); // "Test Method"
+				Integer newColumn = rowData.size();
+				if (testMethodName.matches("Test Method")) {
+					// continue;
+					rowData.put(rowData.size(), String.format("Run %d", newColumn));
+				} else {
+					if (verbose) {
 						System.err
 								.println("Adding extra column for test " + testMethodName);
-						Boolean testStatus = Boolean
-								.parseBoolean(testInventoryData.get(testMethodName).toString());
-						rowData.put(newColumn, testStatus.toString());
 					}
-					tableData.add(rowData);
+					Boolean testStatus = Boolean
+							.parseBoolean(testInventoryData.get(testMethodName).toString());
+					rowData.put(newColumn, testStatus.toString());
+				}
+				tableData.add(rowData);
+				if (verbose) {
 					for (Map.Entry<Integer, String> columnData : rowData.entrySet()) {
 						System.err.println(columnData.getKey().toString() + " => "
 								+ columnData.getValue());
@@ -580,8 +588,10 @@ public class TestRandomizer {
 			for (int col = 0; col < rowData.size(); col++) {
 				XSSFCell cell = rowObj.createCell(col);
 				cell.setCellValue(rowData.get(col));
-				System.err
-						.println("Writing " + row + " " + col + "  " + rowData.get(col));
+				if (debug) {
+					System.err
+							.println("Writing " + row + " " + col + "  " + rowData.get(col));
+				}
 			}
 		}
 		FileOutputStream fileOut = new FileOutputStream(excelFileName);

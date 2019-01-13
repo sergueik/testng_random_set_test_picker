@@ -138,9 +138,49 @@ testTen: true
 ```
 ### Multi-run Inventory
 
-In addition, `TestRandomizer` is able to create an Excel 2007 spreadsheet ( default is `src/test/resources/TestData.xlsx') with test names and statuses, preserving historic data. It can record the last-run or multi-run stats.
+In addition, `TestRandomizer` hase method `updateMultiRunInventory` where it is able to create or update an Excel 2007 spreadsheet specified by caller (default is `src/test/resources/TestData.xlsx') with test names and run decision statuses (`true` means test has been run, `false` means test was skipped), optionally preserving historic data: can record the last-run or multi-run stats.
 
-The `appendData` property, when set, makes it append a column named `Run <number>` in every new run and populate the most recent test statuses in this column, keeping the historic column intact. When `appendData` is set to `false`, only the most recent run information is saved.
+The `appendData` property, when set, makes it append a column named `Run <number>` in every new run and populate the most recent test statuses in this column, keeping the historic column intact. 
+
+```sh
+Inventory tests run: (30 %)
+testThree
+testNine
+testSix
+---
+Adding extra column for run 7
+0 => Test Method
+1 => Run 1
+2 => Run 2
+3 => Run 3
+4 => Run 4
+5 => Run 5
+6 => Run 6
+7 => Run 7
+---
+Adding extra column for test testOne
+0 => testOne
+1 => false
+2 => false
+3 => false
+4 => false
+5 => false
+6 => true
+7 => false
+...
+---
+Adding extra column for test testThree
+0 => testThree
+1 => true
+2 => true
+3 => true
+4 => false
+5 => false
+6 => false
+7 => true
+...
+```
+When `appendData` is set to `false`, only the most recent run information is saved.
 This feature is new, therefore by default, it is disabled.
 
 ### Work in Progress
