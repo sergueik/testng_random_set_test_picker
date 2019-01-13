@@ -71,6 +71,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 public class TestRandomizer {
 
 	private boolean runAll;
+	private boolean appendData = false;
 	private boolean debug = false;
 	private boolean verbose = false;
 	private static DumperOptions options = new DumperOptions();
@@ -96,6 +97,10 @@ public class TestRandomizer {
 
 	public static void setExcelFileName(String data) {
 		TestRandomizer.excelFileName = data;
+	}
+
+	public void setAppendData(Boolean data) {
+		this.appendData = data;
 	}
 
 	private String spreadsheetFilePath = System.getProperty("user.dir")
@@ -236,42 +241,70 @@ public class TestRandomizer {
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
-		columnHeaders = readColumnHeaders();
-		newColumnHeader = String.format("Row %d", columnHeaders.size());
-		appendColumnHeader(newColumnHeader);
-		columnHeaders = readColumnHeaders();
-		if (debug) {
-			System.err.println("Appended column: " + columnHeaders.toString());
-		}
 		setExcelFileName(spreadsheetFilePath);
 		setSheetName("Test Status");
 		setSheetFormat("Excel 2007");
-		rowData = new HashMap<>();
-		// TODO: reserve row 0 for headers so it can be queried via FILLO SQL
-		for (int column = 0; column != columnHeaders.size(); column++) {
-			rowData.put(column, columnHeaders.get(column));
-		}
-		tableData.add(rowData);
-		// columnHeaders
-		for (String testMethodName : testInventoryData.keySet()) {
+		if (!appendData) {
+			columnHeaders = readColumnHeaders();
+			newColumnHeader = String.format("Run %d", columnHeaders.size());
+			appendColumnHeader(newColumnHeader);
+			columnHeaders = readColumnHeaders();
+			if (debug) {
+				System.err.println("Appended column: " + columnHeaders.toString());
+			}
 			rowData = new HashMap<>();
-			// TODO: take into account header offset
-			rowData.put(0, testMethodName);
-			rowData.put(1, testInventoryData.get(testMethodName).toString());
+			// TODO: reserve row 0 for headers so it can be queried via FILLO SQL
+			for (int column = 0; column != columnHeaders.size(); column++) {
+				rowData.put(column, columnHeaders.get(column));
+			}
 			tableData.add(rowData);
-		}
-		setTableData(tableData);
-		try {
+			// columnHeaders
+			for (String testMethodName : testInventoryData.keySet()) {
+				rowData = new HashMap<>();
+				// TODO: take into account header offset
+				rowData.put(0, testMethodName);
+				rowData.put(1, testInventoryData.get(testMethodName).toString());
+				tableData.add(rowData);
+			}
+			setTableData(tableData);
+		} else {
 			List<Map<Integer, String>> existingData = new ArrayList<>();
-			readSpreadsheet(Optional.of(existingData));
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
+			try {
+				readSpreadsheet(Optional.of(existingData));
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+			if (debug) {
+				System.err.println("Adding extra column");
 
-		try {
-			writeSpreadsheet();
-		} catch (IOException e) {
-			e.printStackTrace();
+				tableData = new ArrayList<>(); // reset tableData
+				for (Map<Integer, String> rowData : existingData) {
+					String testMethodName = rowData.get(0); // "Test Method"
+					Integer newColumn = rowData.size();
+					if (testMethodName.matches("Test Method")) {
+						// continue;
+						rowData.put(rowData.size(), String.format("Run %d", newColumn));
+					} else {
+						System.err
+								.println("Adding extra column for test " + testMethodName);
+						Boolean testStatus = Boolean
+								.parseBoolean(testInventoryData.get(testMethodName).toString());
+						rowData.put(newColumn, testStatus.toString());
+					}
+					tableData.add(rowData);
+					for (Map.Entry<Integer, String> columnData : rowData.entrySet()) {
+						System.err.println(columnData.getKey().toString() + " => "
+								+ columnData.getValue());
+					}
+					System.err.println("---");
+				}
+			}
+
+			try {
+				writeSpreadsheet();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 
@@ -321,6 +354,7 @@ public class TestRandomizer {
 	}
 
 	private void appendColumnHeader(String columnHeader) {
+		// TODO: process Excel 2003 files
 		XSSFWorkbook workBook = null;
 		try {
 			workBook = new XSSFWorkbook(spreadsheetFilePath);
@@ -370,34 +404,35 @@ public class TestRandomizer {
 		tableData = data;
 	}
 
+	@SuppressWarnings("unused")
 	private void readSpreadsheet() throws IOException {
 		readSpreadsheet(null);
 	}
 
 	// TODO: Optional argument to store the data read
-	private void readSpreadsheet(Optional<List<Map<Integer, String>>> data)
-			throws IOException {
+	private void readSpreadsheet(
+			Optional<List<Map<Integer, String>>> dataCollector) throws IOException {
 
-		List<Map<Integer, String>> dataCollector = (data.isPresent()) ? data.get()
-				: new ArrayList<>();
+		List<Map<Integer, String>> _dataCollector = (dataCollector.isPresent())
+				? dataCollector.get() : new ArrayList<>();
 
 		if (sheetFormat.matches("(?i:Excel 2007)")) {
 			if (debug) {
 				System.err.println("Reading Excel 2007 data sheet.");
 			}
-			readXLSXFile(dataCollector);
+			readXLSXFile(_dataCollector);
 		} else if (sheetFormat.matches("(?i:Excel 2003)")) {
 			if (debug) {
 				System.err.println("Reading Excel 2003 data sheet.");
 			}
-			readXLSFile(dataCollector);
+			readXLSFile(_dataCollector);
 		} else {
 			if (debug) {
 				System.err.println("Unrecognized data sheet format: " + sheetFormat);
 			}
 		}
 		if (debug) {
-			for (Map<Integer, String> rowData : dataCollector) {
+			for (Map<Integer, String> rowData : _dataCollector) {
 				for (Map.Entry<Integer, String> columnData : rowData.entrySet()) {
 					System.err.println(
 							columnData.getKey().toString() + " => " + columnData.getValue());

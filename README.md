@@ -1,16 +1,19 @@
 ### Info
 
-This directory contains a custom Randomize Test class suggested in the forum [Automatically select 10% round-robin subset of the tests during run](https://automated-testing.info/t/testng-zapusk-10-testov-s-randomnoj-vyborkoj/22059/7) (in Russian).
+This directory contains a custom __Random Test Picker__ class suggested in the forum [Automatically select 10% round-robin subset of the tests during run](https://automated-testing.info/t/testng-zapusk-10-testov-s-randomnoj-vyborkoj/22059/7) (in Russian).
 
 [![BuildStatus](https://travis-ci.org/sergueik/testng_random_set_test_picker.svg?branch=master)](https://travis-ci.org/sergueik/testng_random_set_test_picker)
 
 ### Overview
+![Inventory Example](https://github.com/sergueik/testng_random_set_test_picker/blob/master/screenshots/capture_test_inventory.png)
 
 It turns out that the advice provided in the forum is incorrect at least witn __TestNg__ version __6.14.3__.
 
 Throwing the `new` `org.testng.SkipException` from the method annotated with `@BeforeMethod` has a horrible side effect: not only one specific intended to get skipper test ends up being skipped but the exception completely aborts the flow of test execution. In other words all tests starting with the intended to skip in their normal (alphabetical, unless specified otherwise) order will be silently skipped. None of methods annotated with various `@After` scopes will be executed either.
 
-This scenario is illustrated in this project by the class `SkipRestOfTestSetTest` in the current project. The class contains a set of dummy methods named `testTwentyOne`, `testTwentyTwo`, through `testTwentyNine`, and exercises the bad implementation of the plan to skip the "testWentyFour" by invoking a special method `skipTestFour` in the designated class `TestRandomizer` class that would throw the exception.
+This scenario is illustrated in this project by the class `SkipRestOfTestSetTest` in the current project. The class contains a set of dummy methods named `testTwentyOne`, `testTwentyTwo`, through `testTwentyNine`, and exercises the bad implementation of the plan to skip the "testWentyFour"
+by invoking a special method `skipTestFour` in the designated __Random Test Picker__
+class `TestRandomizer` that would throw the exception.
 
 Notably the `skipTestFour` would better be named `skipAllStartingFromTestFour` since the exception side effect:
 ```java
@@ -88,11 +91,38 @@ Inventory tests run:
 testOne
 ```
 ### Usage
-### Work in Progress
 
-With the realistic number of tests, and a random `decide` method, inventory  is critical: scanning test log or Alure report does not scale too well.
-With the method `dumpInventory` one can currently write the YAML file to the
-path specified through the property `inventoryFilePath`, overwriting that file, without presering the historic data:
+__Random Test Picker__ is a jar  artifact. In order to consume it in a Maven project, one merely needs
+to add the following the dependency in the `pom` file.
+```xml
+<dependency>
+  <groupId>com.github.sergueik.testng</groupId>
+  <artifactId>testng_random_test_set</artifactId>
+  <packaging>jar</packaging>
+  <version>0.2-SNAPSHOT</version>
+</dependency>
+```
+There currently is no release version, therefore one needs to also add the usual
+```xml
+<repositories>
+  <repository>
+    <id>ossrh</id>
+    <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+  </repository>
+</repositories>
+```
+This will change after deployement of a release version.
+
+The test methods to
+
+### Statistics of the test method selecton
+
+With realistic number of tests, and a stochastic `decide` method, inventory of which test methds were run, can be critical.
+Finding which tests were actually run in a given run/range or runs through test log or Alure report does not scale too well.
+
+
+The method `dumpInventory` is provided through which one can generate a basic YAML file to the
+path specified through the property `inventoryFilePath`, overwriting the existing file, without presering historic data:
 ```yaml
 ---
 testOne: false
@@ -106,9 +136,16 @@ testFive: false
 testTwo: false
 testTen: true
 ```
-`TestRandomizer` also creates an Excel 2007 spreadsheet `src/test/resources/TestData..xlsx' with test names and statuses in a new column (every run adds a column). This is wotk in progress.
+### Multi-run Inventory
 
-Persisten: inventory into a csv/spreadsheet/ELK is a work in progress.
+In addition, `TestRandomizer` is able to create an Excel 2007 spreadsheet ( default is `src/test/resources/TestData.xlsx') with test names and statuses, preserving historic data. It can record the last-run or multi-run stats.
+
+The `appendData` property, when set, makes it append a column named `Run <number>` in every new run and populate the most recent test statuses in this column, keeping the historic column intact. When `appendData` is set to `false`, only the most recent run information is saved.
+This feature is new, therefore by default, it is disabled.
+
+### Work in Progress
+
+Persistent inventory into alternative media like the database or ElasticSearch provider is a work in progress.
 
 ### See Also
  * discussion of `SkipException` in [stackoverflow](https://stackoverflow.com/questions/21591712/how-do-i-use-testng-skipexception)
