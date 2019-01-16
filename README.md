@@ -12,8 +12,7 @@ It turns out that the advice provided in the forum is incorrect at least witn __
 Throwing the `new` `org.testng.SkipException` from the method annotated with `@BeforeMethod` has a horrible side effect: not only one specific intended to get skipper test ends up being skipped but the exception completely aborts the flow of test execution. In other words all tests starting with the intended to skip in their normal (alphabetical, unless specified otherwise) order will be silently skipped. None of methods annotated with various `@After` scopes will be executed either.
 
 This scenario is illustrated in this project by the class `SkipRestOfTestSetTest` in the current project. The class contains a set of dummy methods named `testTwentyOne`, `testTwentyTwo`, through `testTwentyNine`, and exercises the bad implementation of the plan to skip the "testWentyFour"
-by invoking a special method `skipTestFour` in the designated __Random Test Picker__
-class `TestRandomizer` that would throw the exception.
+by invoking a special method `skipTestFour` in the designated __Random Test Picker__ class `TestRandomizer` that would throw the exception.
 
 Notably the `skipTestFour` would better be named `skipAllStartingFromTestFour` since the exception side effect:
 ```java
@@ -90,6 +89,19 @@ ator@1175e2db
 Inventory tests run:
 testOne
 ```
+Yet another alternative is to shuffle and pick a requested number of tests nin the class implementing the `IMethodInterceptor` [method Interceptor](http://testng.org/doc/documentation-main.html#methodinterceptors):
+```java
+public class MethodInterceptor implements IMethodInterceptor {
+
+@Override
+  public List<IMethodInstance> intercept(List<IMethodInstance> methods, ITestContext context) {
+    Collections.shuffle(methods);
+    int sizeLimit = (int) Math.ceil(methods.size() * 0.01 * percentage);
+    return methods.subList(0, sizeLimit);
+  }
+}
+```
+A full list of tests that are about to run, is available to this class.
 ### Usage
 
 __Random Test Picker__ is a jar  artifact. In order to consume it in a Maven project, one merely needs
@@ -140,7 +152,7 @@ testTen: true
 
 In addition, `TestRandomizer` hase method `updateMultiRunInventory` where it is able to create or update an Excel 2007 spreadsheet specified by caller (default is `src/test/resources/TestData.xlsx') with test names and run decision statuses (`true` means test has been run, `false` means test was skipped), optionally preserving historic data: can record the last-run or multi-run stats.
 
-The `appendData` property, when set, makes it append a column named `Run <number>` in every new run and populate the most recent test statuses in this column, keeping the historic column intact. 
+The `appendData` property, when set, makes it append a column named `Run <number>` in every new run and populate the most recent test statuses in this column, keeping the historic column intact.
 
 ```sh
 Inventory tests run: (30 %)
@@ -191,6 +203,8 @@ Persistent inventory into alternative media like the database or ElasticSearch p
  * discussion of `SkipException` in [stackoverflow](https://stackoverflow.com/questions/21591712/how-do-i-use-testng-skipexception)
  * customized TestNG [report](https://github.com/djangofan/testng-custom-report-example) illustrating skip techniques
  * [some examples copied from snakeyaml documentaion](https://www.programcreek.com/java-api-examples/?api=org.yaml.snakeyaml.DumperOptions)
+ * [IMethodInterceptor](https://github.com/cbeust/testng/blob/master/src/main/java/org/testng/IMethodInterceptor.java#L24-L27) - supported core testNgi method
+ * [IMethodInterceptor examples](https://www.seleniumeasy.com/testng-tutorials/imethodinterceptor-example-to-reorder-tests)
 
 ### License
 This project is licensed under the terms of the MIT license.
