@@ -63,6 +63,8 @@ import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
+import com.github.sergueik.testng.utils.ExcelFileUtils;
+
 /**
  * Class for skipping a specific testNg test execution by throwing an exception
  * @author: Serguei Kouzmine (kouzmine_serguei@yahoo.com)
@@ -72,14 +74,13 @@ public class TestRandomizer {
 
 	private boolean runAll;
 	private boolean appendData = true;
-	private boolean debug = false;
+	private boolean debug = true;
 	private boolean verbose = false;
 	private static DumperOptions options = new DumperOptions();
 	private static Yaml yaml = null;
 	private String inventoryFilePath = null;
 	private static Map<String, Object> testInventoryData = new HashMap<>();
 	private int percentage = 10;
-	private static String excelFileName = null; // name of excel file
 	private static String sheetName = "Sheet1"; // name of the sheet
 	private static String sheetFormat = "Excel 2007"; // format of the sheet
 	// possible alternative: use RowSet like for JDBC API
@@ -93,10 +94,6 @@ public class TestRandomizer {
 
 	public static void setSheetName(String data) {
 		TestRandomizer.sheetName = data;
-	}
-
-	public static void setExcelFileName(String data) {
-		TestRandomizer.excelFileName = data;
 	}
 
 	public void setAppendData(Boolean data) {
@@ -245,13 +242,23 @@ public class TestRandomizer {
 
 	// supports last-run and keep-history invenories
 	public void updateMultiRunInventory() {
-		setExcelFileName(spreadsheetFilePath);
-		setSheetName("Test Status");
-		setSheetFormat("Excel 2007");
+
+		ExcelFileUtils excelFileUtils = new ExcelFileUtils();
+		excelFileUtils.setSpreadsheetFilePath(spreadsheetFilePath);
+		excelFileUtils.setSheetFormat("Excel 2007");
+		excelFileUtils.setSheetName("Test Status");
+		excelFileUtils.setDebug(true /* this.debug */ );
+		excelFileUtils.setTableData(tableData);
+		// setspreadsheetFilePath(spreadsheetFilePath);
+		// setSheetName("Test Status");
+		// setSheetFormat("Excel 2007");
 		if (!appendData) {
 			columnHeaders = readColumnHeaders();
 			newColumnHeader = String.format("Run %d", columnHeaders.size());
 			appendColumnHeader(newColumnHeader);
+			// appendColumnHeader(newColumnHeader);
+			excelFileUtils.appendColumnHeader(newColumnHeader);
+
 			columnHeaders = readColumnHeaders();
 			if (debug) {
 				System.err.println("Appended column: " + columnHeaders.toString());
@@ -274,7 +281,9 @@ public class TestRandomizer {
 		} else {
 			List<Map<Integer, String>> existingData = new ArrayList<>();
 			try {
-				readSpreadsheet(Optional.of(existingData));
+				// NOTE: no need to wrap into an Optional
+				excelFileUtils.readSpreadsheet(Optional.of(existingData));
+				// readSpreadsheet(Optional.of(existingData));
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}
@@ -309,7 +318,9 @@ public class TestRandomizer {
 			}
 
 			try {
-				writeSpreadsheet();
+				// writeSpreadsheet();
+				excelFileUtils.setTableData(tableData);
+				excelFileUtils.writeSpreadsheet();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -453,7 +464,7 @@ public class TestRandomizer {
 	private void readXLSFile(List<Map<Integer, String>> data) throws IOException {
 
 		Map<Integer, String> rowData = new HashMap<>();
-		InputStream ExcelFileToRead = new FileInputStream(excelFileName);
+		InputStream ExcelFileToRead = new FileInputStream(spreadsheetFilePath);
 		HSSFWorkbook wb = new HSSFWorkbook(ExcelFileToRead);
 		HSSFSheet sheet = wb.getSheetAt(0);
 		HSSFRow row;
@@ -500,7 +511,7 @@ public class TestRandomizer {
 			throws IOException {
 
 		Map<Integer, String> rowData = new HashMap<>();
-		InputStream ExcelFileToRead = new FileInputStream(excelFileName);
+		InputStream ExcelFileToRead = new FileInputStream(spreadsheetFilePath);
 		XSSFWorkbook wb = new XSSFWorkbook(ExcelFileToRead);
 		XSSFWorkbook test = new XSSFWorkbook();
 		XSSFSheet sheet = wb.getSheetAt(0);
@@ -570,7 +581,7 @@ public class TestRandomizer {
 			}
 		}
 
-		FileOutputStream fileOut = new FileOutputStream(excelFileName);
+		FileOutputStream fileOut = new FileOutputStream(spreadsheetFilePath);
 		wbObj.write(fileOut);
 		wbObj.close();
 		fileOut.flush();
@@ -594,7 +605,7 @@ public class TestRandomizer {
 				}
 			}
 		}
-		FileOutputStream fileOut = new FileOutputStream(excelFileName);
+		FileOutputStream fileOut = new FileOutputStream(spreadsheetFilePath);
 		wbObj.write(fileOut);
 		wbObj.close();
 		fileOut.flush();

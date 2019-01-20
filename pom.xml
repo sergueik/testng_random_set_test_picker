@@ -4,7 +4,7 @@
   <artifactId>testng_random_test_set</artifactId>
   <groupId>com.github.sergueik.testng</groupId>
   <packaging>jar</packaging>
-  <version>0.2-SNAPSHOT</version>
+  <version>0.3-SNAPSHOT</version>
   <name>app</name>
   <description>Custom random test class choser</description>
   <url>http://maven.apache.org</url>
