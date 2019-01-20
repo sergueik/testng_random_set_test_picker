@@ -49,7 +49,6 @@ public class SkipRestOfTestSetTest {
 					"BeforeMethod calling Test Ramdomizer to decide on " + methodName);
 		}
 		testRandomizer.skipTestFour(methodName);
-
 	}
 
 	@Test(enabled = true)

@@ -36,7 +36,7 @@ import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.Row;
-
+import org.apache.poi.ss.util.CellReference;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
@@ -65,6 +65,15 @@ public class ExcelFileUtils {
 
 	private Map<Integer, String> rowData = new HashMap<>();
 	private List<String> columnHeaders = new ArrayList<>();
+
+	public List<String> getColumnHeaders() {
+		return columnHeaders;
+	}
+
+	public void setColumnHeaders(List<String> data) {
+		this.columnHeaders = data;
+	}
+
 	private String newColumnHeader = null;
 
 	private List<Map<Integer, String>> tableData = new ArrayList<>();
@@ -81,9 +90,8 @@ public class ExcelFileUtils {
 
 	// name of excel file - default is under src/test/resources of the current
 	// project
-	private String spreadsheetFilePath = System.getProperty("user.dir")
-			+ "/src/test/resources/TestData.xlsx";
-	private String tmpSaveFilePath = System.getenv("TEMP") + "/TestData.xlsx";
+	private String spreadsheetFilePath = null;
+	private String tmpSaveFilePath = null;
 
 	public void setSpreadsheetFilePath(String value) {
 		this.spreadsheetFilePath = value;
@@ -363,6 +371,52 @@ public class ExcelFileUtils {
 			fileOutputStream.flush();
 			fileOutputStream.close();
 		}
+	}
+
+	public List<String> readColumnHeaders() {
+
+		List<String> result = new ArrayList<>();
+		Map<String, String> columns = new HashMap<>();
+		XSSFWorkbook xssWorkBook = null;
+		try {
+			xssWorkBook = new XSSFWorkbook(spreadsheetFilePath);
+		} catch (IOException e) {
+		}
+		if (xssWorkBook == null) {
+			return new ArrayList<>();
+		}
+		XSSFSheet sheet = xssWorkBook.getSheetAt(0);
+		Iterator<Row> rows = sheet.rowIterator();
+		while (rows.hasNext()) {
+			XSSFRow row = (XSSFRow) rows.next();
+			if (row.getRowNum() == 0) {
+				Iterator<org.apache.poi.ss.usermodel.Cell> cells = row.cellIterator();
+				while (cells.hasNext()) {
+
+					XSSFCell cell = (XSSFCell) cells.next();
+					int columnIndex = cell.getColumnIndex();
+					String columnHeader = cell.getStringCellValue();
+					String columnName = CellReference
+							.convertNumToColString(cell.getColumnIndex());
+					columns.put(columnName, columnHeader);
+					if (debug) {
+						System.err
+								.println(columnIndex + "[" + columnName + "]: " + columnHeader);
+					}
+				}
+			}
+		}
+		try {
+			xssWorkBook.close();
+			result = new ArrayList<String>(columns.values());
+		} catch (IOException e) {
+			System.err.println("Exception (ignored): " + e.toString());
+		}
+		if (debug) {
+			System.err.println("Return: " + result.toString());
+		}
+		this.columnHeaders = result;
+		return result;
 	}
 
 	public void appendColumnHeader(String columnHeader) {

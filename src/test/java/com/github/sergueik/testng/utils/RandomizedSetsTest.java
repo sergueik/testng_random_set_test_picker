@@ -42,6 +42,9 @@ public class RandomizedSetsTest extends BaseTest {
 		testRandomizer.setDebug(RandomizedSetsTest.debug);
 		testRandomizer.setPercentage(percentage);
 		testRandomizer.setInventoryFilePath("src/main/resources/tests.yaml");
+		testRandomizer.setSpreadsheetFilePath(
+				System.getProperty("user.dir") + "/src/test/resources/TestData.xlsx");
+
 		testRandomizer.loadInventory();
 	}
 

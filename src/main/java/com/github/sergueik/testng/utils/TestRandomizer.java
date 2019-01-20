@@ -1,69 +1,29 @@
 package com.github.sergueik.testng.utils;
 
-/**
- * Copyright 2019 Serguei Kouzmine
- */
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.FileWriter;
 /**
  * Copyright 2019 Serguei Kouzmine
  */
 import java.io.IOException;
 import java.io.InputStream;
+
 import java.nio.file.Files;
 import java.nio.file.Paths;
+
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Map.Entry;
-import java.util.Random;
+
+import java.util.Optional;
+
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.util.CellReference;
-import org.apache.poi.xssf.usermodel.XSSFCell;
-import org.apache.poi.xssf.usermodel.XSSFRow;
-import org.apache.poi.xssf.usermodel.XSSFSheet;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.testng.SkipException;
-
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
-
-import com.codoid.products.fillo.Connection;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-
-import org.apache.poi.hssf.usermodel.HSSFCell;
-import org.apache.poi.hssf.usermodel.HSSFRow;
-import org.apache.poi.hssf.usermodel.HSSFSheet;
-import org.apache.poi.hssf.usermodel.HSSFWorkbook;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.CellType;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.util.CellReference;
-
-import org.apache.poi.xssf.usermodel.XSSFCell;
-import org.apache.poi.xssf.usermodel.XSSFRow;
-import org.apache.poi.xssf.usermodel.XSSFSheet;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-
-import com.github.sergueik.testng.utils.ExcelFileUtils;
 
 /**
  * Class for skipping a specific testNg test execution by throwing an exception
@@ -74,15 +34,17 @@ public class TestRandomizer {
 
 	private boolean runAll;
 	private boolean appendData = true;
-	private boolean debug = true;
-	private boolean verbose = false;
+	private boolean debug = false;
+	private boolean verbose = true;
 	private static DumperOptions options = new DumperOptions();
 	private static Yaml yaml = null;
 	private String inventoryFilePath = null;
 	private static Map<String, Object> testInventoryData = new HashMap<>();
 	private int percentage = 10;
-	private static String sheetName = "Sheet1"; // name of the sheet
-	private static String sheetFormat = "Excel 2007"; // format of the sheet
+	// name of the sheet - probably should infer caller class
+	private static String sheetName = "Test Status";
+	// format of the sheet
+	private static String sheetFormat = "Excel 2007";
 	// possible alternative: use RowSet like for JDBC API
 	// https://docs.oracle.com/javase/7/docs/api/javax/sql/RowSet.html
 	private static List<Map<Integer, String>> tableData = new ArrayList<>();
@@ -100,11 +62,8 @@ public class TestRandomizer {
 		this.appendData = data;
 	}
 
-	private String spreadsheetFilePath = System.getProperty("user.dir")
-			+ "/src/test/resources/TestData.xlsx";
+	private String spreadsheetFilePath = null;
 
-	private final String saveFilePath = System.getProperty("user.dir")
-			+ "/src/test/resources/TestData.BACKUP.xlsx";
 	private static List<String> columnHeaders = new ArrayList<>();
 	private static String newColumnHeader = null;
 
@@ -187,6 +146,7 @@ public class TestRandomizer {
 		testInventoryData.put(methodName, true);
 	}
 
+	@SuppressWarnings("unchecked")
 	public void loadInventory() {
 
 		options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
@@ -245,26 +205,22 @@ public class TestRandomizer {
 
 		ExcelFileUtils excelFileUtils = new ExcelFileUtils();
 		excelFileUtils.setSpreadsheetFilePath(spreadsheetFilePath);
-		excelFileUtils.setSheetFormat("Excel 2007");
-		excelFileUtils.setSheetName("Test Status");
+		excelFileUtils.setSheetFormat(sheetFormat);
+		excelFileUtils.setSheetName(sheetName);
 		excelFileUtils.setDebug(true /* this.debug */ );
 		excelFileUtils.setTableData(tableData);
-		// setspreadsheetFilePath(spreadsheetFilePath);
-		// setSheetName("Test Status");
-		// setSheetFormat("Excel 2007");
 		if (!appendData) {
-			columnHeaders = readColumnHeaders();
+			columnHeaders = excelFileUtils.readColumnHeaders();
 			newColumnHeader = String.format("Run %d", columnHeaders.size());
-			appendColumnHeader(newColumnHeader);
-			// appendColumnHeader(newColumnHeader);
 			excelFileUtils.appendColumnHeader(newColumnHeader);
 
-			columnHeaders = readColumnHeaders();
+			columnHeaders = excelFileUtils.readColumnHeaders();
 			if (debug) {
 				System.err.println("Appended column: " + columnHeaders.toString());
 			}
 			rowData = new HashMap<>();
-			// TODO: reserve row 0 for headers so it can be queried via FILLO SQL
+			// Note: row 0 is reserved for headers
+			// for FILLO SQL query based data access
 			for (int column = 0; column != columnHeaders.size(); column++) {
 				rowData.put(column, columnHeaders.get(column));
 			}
@@ -272,18 +228,16 @@ public class TestRandomizer {
 			// columnHeaders
 			for (String testMethodName : testInventoryData.keySet()) {
 				rowData = new HashMap<>();
-				// TODO: take into account header offset
 				rowData.put(0, testMethodName);
 				rowData.put(1, testInventoryData.get(testMethodName).toString());
 				tableData.add(rowData);
 			}
-			setTableData(tableData);
+			excelFileUtils.setTableData(tableData);
 		} else {
 			List<Map<Integer, String>> existingData = new ArrayList<>();
 			try {
 				// NOTE: no need to wrap into an Optional
 				excelFileUtils.readSpreadsheet(Optional.of(existingData));
-				// readSpreadsheet(Optional.of(existingData));
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}
@@ -318,7 +272,6 @@ public class TestRandomizer {
 			}
 
 			try {
-				// writeSpreadsheet();
 				excelFileUtils.setTableData(tableData);
 				excelFileUtils.writeSpreadsheet();
 			} catch (IOException e) {
@@ -326,290 +279,4 @@ public class TestRandomizer {
 			}
 		}
 	}
-
-	private List<String> readColumnHeaders() {
-
-		List<String> result = new ArrayList<>();
-		Map<String, String> columns = new HashMap<>();
-		XSSFWorkbook workBook = null;
-		try {
-			workBook = new XSSFWorkbook(spreadsheetFilePath);
-		} catch (IOException e) {
-		}
-		if (workBook == null) {
-			return new ArrayList<>();
-		}
-		XSSFSheet sheet = workBook.getSheetAt(0);
-		Iterator<Row> rows = sheet.rowIterator();
-		while (rows.hasNext()) {
-			XSSFRow row = (XSSFRow) rows.next();
-			if (row.getRowNum() == 0) {
-				Iterator<org.apache.poi.ss.usermodel.Cell> cells = row.cellIterator();
-				while (cells.hasNext()) {
-
-					XSSFCell cell = (XSSFCell) cells.next();
-					int columnIndex = cell.getColumnIndex();
-					String columnHeader = cell.getStringCellValue();
-					String columnName = CellReference
-							.convertNumToColString(cell.getColumnIndex());
-					columns.put(columnName, columnHeader);
-					if (debug) {
-						System.err
-								.println(columnIndex + "[" + columnName + "]: " + columnHeader);
-					}
-				}
-			}
-		}
-		try {
-			workBook.close();
-			result = new ArrayList<String>(columns.values());
-		} catch (IOException e) {
-			System.err.println("Exception (ignored): " + e.toString());
-		}
-		if (debug) {
-			System.err.println("Return: " + result.toString());
-		}
-		return result;
-	}
-
-	private void appendColumnHeader(String columnHeader) {
-		// TODO: process Excel 2003 files
-		XSSFWorkbook workBook = null;
-		try {
-			workBook = new XSSFWorkbook(spreadsheetFilePath);
-		} catch (IOException e) {
-		}
-		if (workBook == null) {
-			return;
-		}
-		XSSFSheet sheet = workBook.getSheetAt(0);
-		Iterator<Row> rows = sheet.rowIterator();
-		Iterator<org.apache.poi.ss.usermodel.Cell> cells;
-		while (rows.hasNext()) {
-			XSSFRow row = (XSSFRow) rows.next();
-			if (row.getRowNum() == 0) {
-				XSSFCell cell = row.createCell(columnHeaders.size());
-				cell.setCellValue(columnHeader);
-				if (debug) {
-					System.err.println("Adding column # " + (columnHeaders.size())
-							+ " with the name: " + columnHeader);
-				}
-				cells = row.cellIterator();
-			}
-		}
-		try {
-			// TODO: saving "it" properly, without dummy temporary file
-			FileOutputStream fileOut = new FileOutputStream(saveFilePath);
-			workBook.write(fileOut);
-			fileOut.flush();
-			fileOut.close();
-
-			workBook.close();
-		} catch (IOException e) {
-		}
-		File file = new File(saveFilePath);
-		if (file.delete()) {
-			if (debug) {
-				System.out.println("File " + saveFilePath + " deleted successfully");
-			}
-		} else {
-			if (debug) {
-				System.out.println("Failed to delete the file " + saveFilePath);
-			}
-		}
-	}
-
-	public static void setTableData(List<Map<Integer, String>> data) {
-		tableData = data;
-	}
-
-	@SuppressWarnings("unused")
-	private void readSpreadsheet() throws IOException {
-		readSpreadsheet(null);
-	}
-
-	// TODO: Optional argument to store the data read
-	private void readSpreadsheet(
-			Optional<List<Map<Integer, String>>> dataCollector) throws IOException {
-
-		List<Map<Integer, String>> _dataCollector = (dataCollector.isPresent())
-				? dataCollector.get() : new ArrayList<>();
-
-		if (sheetFormat.matches("(?i:Excel 2007)")) {
-			if (debug) {
-				System.err.println("Reading Excel 2007 data sheet.");
-			}
-			readXLSXFile(_dataCollector);
-		} else if (sheetFormat.matches("(?i:Excel 2003)")) {
-			if (debug) {
-				System.err.println("Reading Excel 2003 data sheet.");
-			}
-			readXLSFile(_dataCollector);
-		} else {
-			if (debug) {
-				System.err.println("Unrecognized data sheet format: " + sheetFormat);
-			}
-		}
-		if (debug) {
-			for (Map<Integer, String> rowData : _dataCollector) {
-				for (Map.Entry<Integer, String> columnData : rowData.entrySet()) {
-					System.err.println(
-							columnData.getKey().toString() + " => " + columnData.getValue());
-				}
-				System.err.println("---");
-			}
-		}
-	}
-
-	private void readXLSFile(List<Map<Integer, String>> data) throws IOException {
-
-		Map<Integer, String> rowData = new HashMap<>();
-		InputStream ExcelFileToRead = new FileInputStream(spreadsheetFilePath);
-		HSSFWorkbook wb = new HSSFWorkbook(ExcelFileToRead);
-		HSSFSheet sheet = wb.getSheetAt(0);
-		HSSFRow row;
-		HSSFCell cell;
-
-		Iterator<Row> rows = sheet.rowIterator();
-
-		while (rows.hasNext()) {
-
-			row = (HSSFRow) rows.next();
-			Iterator<Cell> cells = row.cellIterator();
-
-			int cellNum = 0;
-			rowData = new HashMap<>();
-			while (cells.hasNext()) {
-
-				cell = (HSSFCell) cells.next();
-				CellType type = cell.getCellTypeEnum();
-				String cellValue = null;
-				if (type == org.apache.poi.ss.usermodel.CellType.STRING) {
-					cellValue = cell.getStringCellValue();
-				} else if (type == org.apache.poi.ss.usermodel.CellType.NUMERIC) {
-					cellValue = String.format("%f", cell.getNumericCellValue());
-				} else {
-					cellValue = "?";
-					// TODO: Boolean, Formula, Errors
-				}
-				if (debug) {
-					if (debug) {
-						System.err.println("=>" + cellValue + " ");
-					}
-				}
-				rowData.put(cellNum, cellValue);
-				cellNum++;
-			}
-			data.add(rowData);
-			if (debug) {
-				System.err.println("");
-			}
-		}
-	}
-
-	private void readXLSXFile(List<Map<Integer, String>> data)
-			throws IOException {
-
-		Map<Integer, String> rowData = new HashMap<>();
-		InputStream ExcelFileToRead = new FileInputStream(spreadsheetFilePath);
-		XSSFWorkbook wb = new XSSFWorkbook(ExcelFileToRead);
-		XSSFWorkbook test = new XSSFWorkbook();
-		XSSFSheet sheet = wb.getSheetAt(0);
-		XSSFRow row;
-		XSSFCell cell;
-		Iterator<Row> rows = sheet.rowIterator();
-		while (rows.hasNext()) {
-			row = (XSSFRow) rows.next();
-			Iterator<Cell> cells = row.cellIterator();
-			int cellNum = 0;
-			rowData = new HashMap<>();
-			while (cells.hasNext()) {
-				String cellValue = null;
-				cell = (XSSFCell) cells.next();
-				CellType type = cell.getCellTypeEnum();
-				if (type == org.apache.poi.ss.usermodel.CellType.STRING) {
-					cellValue = cell.getStringCellValue();
-				} else if (type == org.apache.poi.ss.usermodel.CellType.NUMERIC) {
-					cellValue = String.format("%f", cell.getNumericCellValue());
-				} else {
-					cellValue = "?";
-					// TODO: Boolean, Formula, Errors
-				}
-				if (debug) {
-					System.err.println("=>" + cellValue + " ");
-				}
-				rowData.put(cellNum, cellValue);
-				cellNum++;
-			}
-			data.add(rowData);
-			if (debug) {
-				System.err.println("");
-			}
-		}
-	}
-
-	private void writeSpreadsheet() throws IOException {
-		if (sheetFormat.matches("(?i:Excel 2007)")) {
-			if (debug) {
-				System.err.println("Reading Excel 2007 data sheet.");
-			}
-			writeXLSXFile();
-		} else if (sheetFormat.matches("(?i:Excel 2003)")) {
-			if (debug) {
-				System.err.println("Reading Excel 2003 data sheet.");
-			}
-			writeXLSFile();
-		} else {
-			if (debug) {
-				System.err.println("Unrecognized data sheet format: " + sheetFormat);
-			}
-		}
-
-	}
-
-	private void writeXLSFile() throws IOException {
-
-		HSSFWorkbook wbObj = new HSSFWorkbook();
-		HSSFSheet sheet = wbObj.createSheet(sheetName);
-
-		for (int row = 0; row < tableData.size(); row++) {
-			HSSFRow rowObj = sheet.createRow(row);
-			rowData = tableData.get(row);
-			for (int col = 0; col < rowData.size(); col++) {
-				HSSFCell cellObj = rowObj.createCell(col);
-				cellObj.setCellValue(rowData.get(col));
-			}
-		}
-
-		FileOutputStream fileOut = new FileOutputStream(spreadsheetFilePath);
-		wbObj.write(fileOut);
-		wbObj.close();
-		fileOut.flush();
-		fileOut.close();
-	}
-
-	private void writeXLSXFile() throws IOException {
-
-		// @SuppressWarnings("resource")
-		XSSFWorkbook wbObj = new XSSFWorkbook();
-		XSSFSheet sheet = wbObj.createSheet(sheetName);
-		for (int row = 0; row < tableData.size(); row++) {
-			XSSFRow rowObj = sheet.createRow(row);
-			rowData = tableData.get(row);
-			for (int col = 0; col < rowData.size(); col++) {
-				XSSFCell cell = rowObj.createCell(col);
-				cell.setCellValue(rowData.get(col));
-				if (debug) {
-					System.err
-							.println("Writing " + row + " " + col + "  " + rowData.get(col));
-				}
-			}
-		}
-		FileOutputStream fileOut = new FileOutputStream(spreadsheetFilePath);
-		wbObj.write(fileOut);
-		wbObj.close();
-		fileOut.flush();
-		fileOut.close();
-	}
-
 }
