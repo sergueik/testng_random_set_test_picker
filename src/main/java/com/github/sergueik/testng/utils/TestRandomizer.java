@@ -1,4 +1,7 @@
 package com.github.sergueik.testng.utils;
+/**
+ * Copyright 2019 Serguei Kouzmine
+ */
 
 import java.io.FileWriter;
 /**
@@ -26,7 +29,9 @@ import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 
 /**
- * Class for skipping a specific testNg test execution by throwing an exception
+ * Class for execution time decision making about 
+ * current testNg test methods to be run or skipped
+ * implemented by throwing an exception away from the method
  * @author: Serguei Kouzmine (kouzmine_serguei@yahoo.com)
  */
 
@@ -235,12 +240,8 @@ public class TestRandomizer {
 			excelFileUtils.setTableData(tableData);
 		} else {
 			List<Map<Integer, String>> existingData = new ArrayList<>();
-			try {
-				// NOTE: no need to wrap into an Optional
-				excelFileUtils.readSpreadsheet(Optional.of(existingData));
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			}
+			// NOTE: no need to wrap into an Optional
+			excelFileUtils.readSpreadsheet(Optional.of(existingData));
 			if (verbose) {
 				System.err.println("Adding extra column");
 			}
@@ -271,12 +272,8 @@ public class TestRandomizer {
 				}
 			}
 
-			try {
-				excelFileUtils.setTableData(tableData);
-				excelFileUtils.writeSpreadsheet();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
+			excelFileUtils.setTableData(tableData);
+			excelFileUtils.writeSpreadsheet();
 		}
 	}
 }

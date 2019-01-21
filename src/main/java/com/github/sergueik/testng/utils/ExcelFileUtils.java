@@ -44,8 +44,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 /**
  * Excel export and load class for Test Randomizer
- * extracted into standalone class
- * see also: 
+ * see also: https://github.com/sergueik/SWET/blob/master/src/main/java/com/github/sergueik/swet/ExcelFileUtils.java
  * @author: Serguei Kouzmine (kouzmine_serguei@yahoo.com)
  */
 
@@ -115,7 +114,178 @@ public class ExcelFileUtils {
 		this.sheetName = data;
 	}
 
-	private void writeXLSXFile() throws IOException {
+	@SuppressWarnings("unused")
+	public void readSpreadsheet() {
+		readSpreadsheet(null);
+	}
+
+	public void readSpreadsheet(
+			Optional<List<Map<Integer, String>>> dataCollector) {
+
+		List<Map<Integer, String>> _dataCollector = (dataCollector.isPresent())
+				? dataCollector.get() : new ArrayList<>();
+
+		if (sheetFormat.matches("(?i:Excel 2007)")) {
+			if (debug) {
+				System.err.println("Reading Excel 2007 data sheet.");
+			}
+			readXLSXFile(_dataCollector);
+		} else if (sheetFormat.matches("(?i:Excel 2003)")) {
+			if (debug) {
+				System.err.println("Reading Excel 2003 data sheet.");
+			}
+			readXLSFile(_dataCollector);
+		} else {
+			if (debug) {
+				System.err.println("Unrecognized data sheet format: " + sheetFormat);
+			}
+		}
+		if (debug) {
+			for (Map<Integer, String> rowData : _dataCollector) {
+				for (Map.Entry<Integer, String> columnData : rowData.entrySet()) {
+					System.err.println(
+							columnData.getKey().toString() + " => " + columnData.getValue());
+				}
+				System.err.println("---");
+			}
+		}
+	}
+
+	private void readXLSFile(List<Map<Integer, String>> data) {
+
+		Map<Integer, String> rowData = new HashMap<>();
+		try (InputStream fileInputStream = new FileInputStream(
+				spreadsheetFilePath)) {
+			HSSFWorkbook hssfWorkbook = new HSSFWorkbook(fileInputStream);
+			HSSFSheet sheet = hssfWorkbook.getSheetAt(0);
+			HSSFRow row;
+			HSSFCell cell;
+
+			Iterator<Row> rows = sheet.rowIterator();
+
+			while (rows.hasNext()) {
+
+				row = (HSSFRow) rows.next();
+				Iterator<Cell> cells = row.cellIterator();
+
+				int cellNum = 0;
+				rowData = new HashMap<>();
+				while (cells.hasNext()) {
+
+					cell = (HSSFCell) cells.next();
+					CellType type = cell.getCellTypeEnum();
+					String cellValue = null;
+					if (type == org.apache.poi.ss.usermodel.CellType.STRING) {
+						cellValue = cell.getStringCellValue();
+					} else if (type == org.apache.poi.ss.usermodel.CellType.NUMERIC) {
+						cellValue = String.format("%f", cell.getNumericCellValue());
+					} else if (type == org.apache.poi.ss.usermodel.CellType.BOOLEAN) {
+						cellValue = String.format("%b", cell.getBooleanCellValue());
+					} else {
+						// NOTE: not parsing either of
+						// org.apache.poi.ss.usermodel.CellType.FORMULA
+						// org.apache.poi.ss.usermodel.CellType.ERROR
+						cellValue = "?";
+					}
+					if (debug) {
+						if (debug) {
+							System.err.println("=>" + cellValue + " ");
+						}
+					}
+					rowData.put(cellNum, cellValue);
+					cellNum++;
+				}
+				data.add(rowData);
+				if (debug) {
+					System.err.println("");
+				}
+			}
+			hssfWorkbook.close();
+			fileInputStream.close();
+			// java 7 improvement smell:
+			// [WARNING] "explicit call to close() on an auto-closeable resource"
+			// NOTE: appears impossible to suppress that warning, at least not via
+			// @SuppressWarnings("resource")
+			// see also:
+			// https://dzone.com/articles/a-subtle-autocloseable-contract-change-between-jav
+			// https://stackoverflow.com/questions/1205995/what-is-the-list-of-valid-suppresswarnings-warning-names-in-java
+		} catch (IOException e) {
+			System.err
+					.println(String.format("Exception reading XLS file %s (ignored): ",
+							spreadsheetFilePath) + e.getMessage());
+		}
+	}
+
+	private void readXLSXFile(List<Map<Integer, String>> data) {
+
+		Map<Integer, String> rowData = new HashMap<>();
+		try (InputStream fileInputStream = new FileInputStream(
+				spreadsheetFilePath)) {
+			XSSFWorkbook xssfWorkbook = new XSSFWorkbook(fileInputStream);
+			XSSFSheet sheet = xssfWorkbook.getSheetAt(0);
+			XSSFRow row;
+			XSSFCell cell;
+			Iterator<Row> rows = sheet.rowIterator();
+			while (rows.hasNext()) {
+				row = (XSSFRow) rows.next();
+				Iterator<Cell> cells = row.cellIterator();
+				int cellNum = 0;
+				rowData = new HashMap<>();
+				while (cells.hasNext()) {
+					String cellValue = null;
+					cell = (XSSFCell) cells.next();
+					CellType type = cell.getCellTypeEnum();
+					if (type == org.apache.poi.ss.usermodel.CellType.STRING) {
+						cellValue = cell.getStringCellValue();
+					} else if (type == org.apache.poi.ss.usermodel.CellType.NUMERIC) {
+						cellValue = String.format("%f", cell.getNumericCellValue());
+					} else if (type == org.apache.poi.ss.usermodel.CellType.BOOLEAN) {
+						cellValue = String.format("%b", cell.getBooleanCellValue());
+					} else {
+						// NOTE: not parsing either of
+						// org.apache.poi.ss.usermodel.CellType.FORMULA
+						// org.apache.poi.ss.usermodel.CellType.ERROR
+						cellValue = "?";
+					}
+					if (debug) {
+						System.err.println("=>" + cellValue + " ");
+					}
+					rowData.put(cellNum, cellValue);
+					cellNum++;
+				}
+				data.add(rowData);
+				if (debug) {
+					System.err.println("");
+				}
+			}
+			xssfWorkbook.close();
+			fileInputStream.close();
+		} catch (IOException e) {
+			System.err
+					.println(String.format("Exception reading XLSX file %s (ignored): ",
+							spreadsheetFilePath) + e.getMessage());
+		}
+	}
+
+	public void writeSpreadsheet() {
+		if (sheetFormat.matches("(?i:Excel 2007)")) {
+			if (debug) {
+				System.err.println("Writing Excel 2007 data sheet.");
+			}
+			writeXLSXFile();
+		} else if (sheetFormat.matches("(?i:Excel 2003)")) {
+			if (debug) {
+				System.err.println("Writing Excel 2003 data sheet.");
+			}
+			writeXLSFile();
+		} else {
+			if (debug) {
+				System.err.println("Unrecognized data sheet format: " + sheetFormat);
+			}
+		}
+	}
+
+	private void writeXLSXFile() {
 
 		XSSFWorkbook xssfWorkbook = new XSSFWorkbook();
 		XSSFSheet sheet = xssfWorkbook.createSheet(sheetName);
@@ -154,179 +324,26 @@ public class ExcelFileUtils {
 		} else {
 			// save the file into the designated spreadsheetFilePath property
 			// without using a temporary tmpSaveFilePath file
-			try {
-				if (debug) {
-					System.err.println("Writing file: " + spreadsheetFilePath);
-				}
-				OutputStream fileOut = new FileOutputStream(spreadsheetFilePath);
-				xssfWorkbook.write(fileOut);
-				fileOut.flush();
-				fileOut.close();
-
+			if (debug) {
+				System.err.println("Writing file: " + spreadsheetFilePath);
+			}
+			// java 7 improvement smell
+			try (FileOutputStream fileOutputStream = new FileOutputStream(
+					spreadsheetFilePath)) {
+				xssfWorkbook.write(fileOutputStream);
 				xssfWorkbook.close();
+				fileOutputStream.flush();
+				fileOutputStream.close();
 			} catch (IOException e) {
-				System.err.println(
-						"Exception (ignored) during saving the workbook " + e.toString());
+				System.err.println(String.format(
+						"Exception saving the workbook to XLSX file %s (ignored): ",
+						spreadsheetFilePath) + e.getMessage());
 			}
-
 		}
 
 	}
 
-	@SuppressWarnings("unused")
-	public void readSpreadsheet() throws IOException {
-		readSpreadsheet(null);
-	}
-
-	public void readSpreadsheet(
-			Optional<List<Map<Integer, String>>> dataCollector) throws IOException {
-
-		List<Map<Integer, String>> _dataCollector = (dataCollector.isPresent())
-				? dataCollector.get() : new ArrayList<>();
-
-		if (sheetFormat.matches("(?i:Excel 2007)")) {
-			if (debug) {
-				System.err.println("Reading Excel 2007 data sheet.");
-			}
-			readXLSXFile(_dataCollector);
-		} else if (sheetFormat.matches("(?i:Excel 2003)")) {
-			if (debug) {
-				System.err.println("Reading Excel 2003 data sheet.");
-			}
-			readXLSFile(_dataCollector);
-		} else {
-			if (debug) {
-				System.err.println("Unrecognized data sheet format: " + sheetFormat);
-			}
-		}
-		if (debug) {
-			for (Map<Integer, String> rowData : _dataCollector) {
-				for (Map.Entry<Integer, String> columnData : rowData.entrySet()) {
-					System.err.println(
-							columnData.getKey().toString() + " => " + columnData.getValue());
-				}
-				System.err.println("---");
-			}
-		}
-	}
-
-	private void readXLSFile(List<Map<Integer, String>> data) throws IOException {
-
-		Map<Integer, String> rowData = new HashMap<>();
-		InputStream fileInputStream = new FileInputStream(spreadsheetFilePath);
-		HSSFWorkbook hssfWorkbook = new HSSFWorkbook(fileInputStream);
-		HSSFSheet sheet = hssfWorkbook.getSheetAt(0);
-		HSSFRow row;
-		HSSFCell cell;
-
-		Iterator<Row> rows = sheet.rowIterator();
-
-		while (rows.hasNext()) {
-
-			row = (HSSFRow) rows.next();
-			Iterator<Cell> cells = row.cellIterator();
-
-			int cellNum = 0;
-			rowData = new HashMap<>();
-			while (cells.hasNext()) {
-
-				cell = (HSSFCell) cells.next();
-				CellType type = cell.getCellTypeEnum();
-				String cellValue = null;
-				if (type == org.apache.poi.ss.usermodel.CellType.STRING) {
-					cellValue = cell.getStringCellValue();
-				} else if (type == org.apache.poi.ss.usermodel.CellType.NUMERIC) {
-					cellValue = String.format("%f", cell.getNumericCellValue());
-				} else if (type == org.apache.poi.ss.usermodel.CellType.BOOLEAN) {
-					cellValue = String.format("%b", cell.getBooleanCellValue());
-				} else {
-					// NOTE: not parsing either of
-					// org.apache.poi.ss.usermodel.CellType.FORMULA
-					// org.apache.poi.ss.usermodel.CellType.ERROR
-					cellValue = "?";
-				}
-				if (debug) {
-					if (debug) {
-						System.err.println("=>" + cellValue + " ");
-					}
-				}
-				rowData.put(cellNum, cellValue);
-				cellNum++;
-			}
-			data.add(rowData);
-			if (debug) {
-				System.err.println("");
-			}
-		}
-		hssfWorkbook.close();
-		fileInputStream.close();
-	}
-
-	private void readXLSXFile(List<Map<Integer, String>> data)
-			throws IOException {
-
-		Map<Integer, String> rowData = new HashMap<>();
-		InputStream fileInputStream = new FileInputStream(spreadsheetFilePath);
-		XSSFWorkbook xssfWorkbook = new XSSFWorkbook(fileInputStream);
-		XSSFSheet sheet = xssfWorkbook.getSheetAt(0);
-		XSSFRow row;
-		XSSFCell cell;
-		Iterator<Row> rows = sheet.rowIterator();
-		while (rows.hasNext()) {
-			row = (XSSFRow) rows.next();
-			Iterator<Cell> cells = row.cellIterator();
-			int cellNum = 0;
-			rowData = new HashMap<>();
-			while (cells.hasNext()) {
-				String cellValue = null;
-				cell = (XSSFCell) cells.next();
-				CellType type = cell.getCellTypeEnum();
-				if (type == org.apache.poi.ss.usermodel.CellType.STRING) {
-					cellValue = cell.getStringCellValue();
-				} else if (type == org.apache.poi.ss.usermodel.CellType.NUMERIC) {
-					cellValue = String.format("%f", cell.getNumericCellValue());
-				} else if (type == org.apache.poi.ss.usermodel.CellType.BOOLEAN) {
-					cellValue = String.format("%b", cell.getBooleanCellValue());
-				} else {
-					// NOTE: not parsing either of
-					// org.apache.poi.ss.usermodel.CellType.FORMULA
-					// org.apache.poi.ss.usermodel.CellType.ERROR
-					cellValue = "?";
-				}
-				if (debug) {
-					System.err.println("=>" + cellValue + " ");
-				}
-				rowData.put(cellNum, cellValue);
-				cellNum++;
-			}
-			data.add(rowData);
-			if (debug) {
-				System.err.println("");
-			}
-		}
-		xssfWorkbook.close();
-		fileInputStream.close();
-	}
-
-	public void writeSpreadsheet() throws IOException {
-		if (sheetFormat.matches("(?i:Excel 2007)")) {
-			if (debug) {
-				System.err.println("Writing Excel 2007 data sheet.");
-			}
-			writeXLSXFile();
-		} else if (sheetFormat.matches("(?i:Excel 2003)")) {
-			if (debug) {
-				System.err.println("Writing Excel 2003 data sheet.");
-			}
-			writeXLSFile();
-		} else {
-			if (debug) {
-				System.err.println("Unrecognized data sheet format: " + sheetFormat);
-			}
-		}
-	}
-
-	private void writeXLSFile() throws IOException {
+	private void writeXLSFile() {
 
 		HSSFWorkbook hssfWorkbook = new HSSFWorkbook();
 		HSSFSheet sheet = hssfWorkbook.createSheet(sheetName);
@@ -346,17 +363,23 @@ public class ExcelFileUtils {
 			if (debug) {
 				System.err.println("Writing file: " + tmpSaveFilePath);
 			}
-			OutputStream fileOutputStream = new FileOutputStream(tmpSaveFilePath);
-			hssfWorkbook.write(fileOutputStream);
-			fileOutputStream.flush();
-			fileOutputStream.close();
-			hssfWorkbook.close();
-			try {
-				copyFile(new File(tmpSaveFilePath), new File(spreadsheetFilePath));
+
+			try (FileOutputStream fileOutputStream = new FileOutputStream(
+					tmpSaveFilePath)) {
+				hssfWorkbook.write(fileOutputStream);
+				hssfWorkbook.close();
+				fileOutputStream.flush();
+				fileOutputStream.close();
 			} catch (IOException e) {
-				System.err.println("Exception (ignored) during renaming the file "
-						+ tmpSaveFilePath + " " + e.toString());
+				System.err
+						.println(String.format("Exception saving XLS file %s (ignored): ",
+								tmpSaveFilePath) + e.getMessage());
 			}
+			if (debug) {
+				System.err.println(
+						"Rename the file " + tmpSaveFilePath + " " + spreadsheetFilePath);
+			}
+			copyFile(new File(tmpSaveFilePath), new File(spreadsheetFilePath));
 			deleteFile(tmpSaveFilePath);
 		} else {
 			// save the file into the designated spreadsheetFilePath property
@@ -364,12 +387,17 @@ public class ExcelFileUtils {
 			if (debug) {
 				System.err.println("Writing file: " + spreadsheetFilePath);
 			}
-			FileOutputStream fileOutputStream = new FileOutputStream(
-					spreadsheetFilePath);
-			hssfWorkbook.write(fileOutputStream);
-			hssfWorkbook.close();
-			fileOutputStream.flush();
-			fileOutputStream.close();
+			try (FileOutputStream fileOutputStream = new FileOutputStream(
+					spreadsheetFilePath)) {
+				hssfWorkbook.write(fileOutputStream);
+				hssfWorkbook.close();
+				fileOutputStream.flush();
+				fileOutputStream.close();
+			} catch (IOException e) {
+				System.err
+						.println(String.format("Exception saving XLS file %s (ignored): ",
+								spreadsheetFilePath) + e.getMessage());
+			}
 		}
 	}
 
@@ -447,8 +475,6 @@ public class ExcelFileUtils {
 
 		// because of the bug in earlier revision
 		// the spreadsheetFilePath was locked
-		// TODO: save the file into the designated spreadsheetFilePath property
-		// without using a temporary tmpSaveFilePath file
 		if (useTemporaryFileWhenSave) {
 
 			try {
@@ -492,29 +518,36 @@ public class ExcelFileUtils {
 		}
 	}
 
-	private void copyFile(File source, File destination) throws IOException {
-		if (destination.isDirectory())
-			destination = new File(destination, source.getName());
+	private void copyFile(File source, File destination) {
+		try {
+			if (destination.isDirectory())
+				destination = new File(destination, source.getName());
 
-		FileInputStream fileInputStream = new FileInputStream(source);
-		copyFile(fileInputStream, destination);
+			FileInputStream fileInputStream = new FileInputStream(source);
+			copyFile(fileInputStream, destination);
+		} catch (IOException e) {
+			System.err.println(String.format("Exception copying %s to %s (ignored): ",
+					source.getName(), destination.getName()) + e.getMessage());
+		}
 	}
 
-	private void copyFile(InputStream inputStream, File destination)
-			throws IOException {
-		OutputStream fileOutputStream = null;
+	private void copyFile(InputStream inputStream, File destination) {
 
-		fileOutputStream = new FileOutputStream(destination);
+		try (OutputStream fileOutputStream = new FileOutputStream(destination)) {
 
-		byte[] buffer = new byte[1024];
+			byte[] buffer = new byte[1024];
+			int bytesRead = inputStream.read(buffer);
 
-		int bytesRead = inputStream.read(buffer);
-
-		while (bytesRead >= 0) {
-			fileOutputStream.write(buffer, 0, bytesRead);
-			bytesRead = inputStream.read(buffer);
+			while (bytesRead >= 0) {
+				fileOutputStream.write(buffer, 0, bytesRead);
+				bytesRead = inputStream.read(buffer);
+			}
+			inputStream.close();
+			fileOutputStream.close();
+		} catch (IOException e) {
+			System.err
+					.println(String.format("Exception copying to file %s (ignored): ",
+							destination.getName()) + e.getMessage());
 		}
-		inputStream.close();
-		fileOutputStream.close();
 	}
 }
