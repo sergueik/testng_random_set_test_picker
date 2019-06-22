@@ -89,7 +89,7 @@ ator@1175e2db
 Inventory tests run:
 testOne
 ```
-Yet another alternative is to shuffle and pick a requested number of tests nin the class implementing the `IMethodInterceptor` [method Interceptor](http://testng.org/doc/documentation-main.html#methodinterceptors):
+Yet another alternative [was suggested](https://automated-testing.info/t/testng-zapusk-10-testov-s-randomnoj-vyborkoj/22059/19) to shuffle and pick a requested number of tests nin the class implementing the `IMethodInterceptor` [method Interceptor](http://testng.org/doc/documentation-main.html#methodinterceptors):
 ```java
 public class MethodInterceptor implements IMethodInterceptor {
 
@@ -205,6 +205,7 @@ Persistent inventory into alternative media like the database or ElasticSearch p
  * [some examples copied from snakeyaml documentaion](https://www.programcreek.com/java-api-examples/?api=org.yaml.snakeyaml.DumperOptions)
  * [IMethodInterceptor](https://github.com/cbeust/testng/blob/master/src/main/java/org/testng/IMethodInterceptor.java#L24-L27) - supported core testNgi method
  * [IMethodInterceptor examples](https://www.seleniumeasy.com/testng-tutorials/imethodinterceptor-example-to-reorder-tests)
+ * [Skip Exception Test in TestNG](https://www.seleniumeasy.com/testng-tutorials/skip-test-in-testng)
 
 ### License
 This project is licensed under the terms of the MIT license.
