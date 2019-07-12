@@ -206,6 +206,7 @@ Persistent inventory into alternative media like the database or ElasticSearch p
  * [IMethodInterceptor](https://github.com/cbeust/testng/blob/master/src/main/java/org/testng/IMethodInterceptor.java#L24-L27) - supported core testNgi method
  * [IMethodInterceptor examples](https://www.seleniumeasy.com/testng-tutorials/imethodinterceptor-example-to-reorder-tests)
  * [Skip Exception Test in TestNG](https://www.seleniumeasy.com/testng-tutorials/skip-test-in-testng)
+ * [skip TestNG tests based on condition](https://www.lenar.io/skip-testng-tests-based-condition-using-iinvokedmethodlistener/)
 
 ### License
 This project is licensed under the terms of the MIT license.
