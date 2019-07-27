@@ -22,7 +22,7 @@
     <commons-io.version>2.5</commons-io.version>
     <commons-lang3.version>3.5</commons-lang3.version>
     <hamcrest-all.version>1.3</hamcrest-all.version>
-    <fillo.version>1.18</fillo.version>
+    <fillo.version>1.21</fillo.version>
     <java.version>1.8</java.version>
     <maven-compiler-plugin.version>3.6.1</maven-compiler-plugin.version>
     <poi.version>3.17</poi.version>
