@@ -50,9 +50,28 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 public class ExcelFileUtils {
 
+	private String sheetName = "Sheet1"; // name of the sheet
+	private Map<Integer, String> rowData = new HashMap<>();
+	private List<String> columnHeaders = new ArrayList<>();
 	private boolean useTemporaryFileWhenSave = true;
 	// useful to set to true when developing new functionality,
 	// protects against leaked file handles breaking write operations
+	private String newColumnHeader = null;
+	private boolean debug = false;
+	// name of excel file - default is under src/test/resources of the current
+	// project
+	private String spreadsheetFilePath = null;
+	private String tmpSaveFilePath = null;
+	private String sheetFormat = "Excel 2007"; // format of the sheet
+
+
+
+	private List<Map<Integer, String>> tableData = new ArrayList<>();
+
+
+	public void setSheetName(String value) {
+		this.sheetName = value;
+	}
 
 	public void setUseTemporaryFileWhenSave(Boolean value) {
 		this.useTemporaryFileWhenSave = value;
@@ -62,9 +81,6 @@ public class ExcelFileUtils {
 		return this.useTemporaryFileWhenSave;
 	}
 
-	private Map<Integer, String> rowData = new HashMap<>();
-	private List<String> columnHeaders = new ArrayList<>();
-
 	public List<String> getColumnHeaders() {
 		return columnHeaders;
 	}
@@ -73,24 +89,15 @@ public class ExcelFileUtils {
 		this.columnHeaders = data;
 	}
 
-	private String newColumnHeader = null;
-
-	private List<Map<Integer, String>> tableData = new ArrayList<>();
 
 	public void setTableData(List<Map<Integer, String>> data) {
 		this.tableData = data;
 	}
 
-	private boolean debug = false;
 
 	public void setDebug(Boolean value) {
 		this.debug = value;
 	}
-
-	// name of excel file - default is under src/test/resources of the current
-	// project
-	private String spreadsheetFilePath = null;
-	private String tmpSaveFilePath = null;
 
 	public void setSpreadsheetFilePath(String value) {
 		this.spreadsheetFilePath = value;
@@ -102,16 +109,8 @@ public class ExcelFileUtils {
 		return this.spreadsheetFilePath;
 	}
 
-	private String sheetFormat = "Excel 2007"; // format of the sheet
-
 	public void setSheetFormat(String data) {
 		this.sheetFormat = data;
-	}
-
-	private String sheetName = "Sheet1"; // name of the sheet
-
-	public void setSheetName(String data) {
-		this.sheetName = data;
 	}
 
 	@SuppressWarnings("unused")
