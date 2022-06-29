@@ -25,7 +25,7 @@
     <fillo.version>1.21</fillo.version>
     <java.version>1.8</java.version>
     <maven-compiler-plugin.version>3.6.1</maven-compiler-plugin.version>
-    <poi.version>3.17</poi.version>
+    <poi.version>4.1.1</poi.version>
     <poiooxml.version>${poi.version}</poiooxml.version>
     <snakeyaml.version>1.26</snakeyaml.version>
     <testng.version>6.14.3</testng.version>
