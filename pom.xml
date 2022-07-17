@@ -4,7 +4,7 @@
   <artifactId>testng_random_test_set</artifactId>
   <groupId>com.github.sergueik.testng</groupId>
   <packaging>jar</packaging>
-  <version>0.4-SNAPSHOT</version>
+  <version>0.5-SNAPSHOT</version>
   <name>app</name>
   <description>Custom random test class choser</description>
   <url>http://maven.apache.org</url>
@@ -25,7 +25,7 @@
     <fillo.version>1.21</fillo.version>
     <java.version>1.8</java.version>
     <maven-compiler-plugin.version>3.6.1</maven-compiler-plugin.version>
-    <poi.version>3.17</poi.version>
+    <poi.version>4.1.1</poi.version>
     <poiooxml.version>${poi.version}</poiooxml.version>
     <snakeyaml.version>1.26</snakeyaml.version>
     <testng.version>6.14.3</testng.version>
