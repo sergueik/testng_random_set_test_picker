@@ -27,7 +27,7 @@
     <maven-compiler-plugin.version>3.6.1</maven-compiler-plugin.version>
     <poi.version>4.1.1</poi.version>
     <poiooxml.version>${poi.version}</poiooxml.version>
-    <snakeyaml.version>1.26</snakeyaml.version>
+    <snakeyaml.version>1.32</snakeyaml.version>
     <testng.version>6.14.3</testng.version>
   </properties>
   <dependencies>
