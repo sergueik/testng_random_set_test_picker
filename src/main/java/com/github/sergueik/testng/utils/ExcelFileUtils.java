@@ -234,6 +234,10 @@ public class ExcelFileUtils {
 					String cellValue = null;
 					cell = (XSSFCell) cells.next();
 					CellType type = cell.getCellTypeEnum();
+					// TODO: java.lang.NoSuchMethodError: org.apache.poi.xssf.usermodel.XSSFCell.getCellTypeEnum()Lorg/apache/poi/ss/usermodel/CellType
+					// in poi 5.1.2
+					// the method was renamed to getCellType
+					// see also: https://poi.apache.org/apidocs/dev/org/apache/poi/xssf/usermodel/XSSFCell.html
 					if (type == org.apache.poi.ss.usermodel.CellType.STRING) {
 						cellValue = cell.getStringCellValue();
 					} else if (type == org.apache.poi.ss.usermodel.CellType.NUMERIC) {
