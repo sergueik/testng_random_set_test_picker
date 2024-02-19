@@ -28,7 +28,7 @@
     <poi.version>4.1.2</poi.version>
     <poiooxml.version>${poi.version}</poiooxml.version>
     <poiooxml.version>${poi.version}</poiooxml.version>
-    <snakeyaml.version>1.32</snakeyaml.version>
+    <snakeyaml.version>2.0</snakeyaml.version>
     <testng.version>7.5.1</testng.version>
   </properties>
   <dependencies>
