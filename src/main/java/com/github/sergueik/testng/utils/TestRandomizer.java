@@ -162,7 +162,13 @@ public class TestRandomizer {
 		yaml = new Yaml(options);
 
 		try (InputStream in = Files.newInputStream(Paths.get(inventoryFilePath))) {
-			testInventoryData = yaml.loadAs(in, testInventoryData.getClass());
+			// NOTE: compilation problem with snakeyaml 2.0:
+			// [ERROR]     method org.yaml.snakeyaml.Yaml.<T>loadAs(java.io.InputStream,java.lang.Class<? super T>) is not applicable
+			// [ERROR]       (cannot infer type-variable(s) T
+			// [ERROR]         (argument mismatch; java.lang.Class<capture#1 of ? extends java.util.Map> cannot be converted to java.lang.Class<? super T>))
+
+			// testInventoryData = yaml.loadAs(in, testInventoryData.getClass());
+			testInventoryData = yaml.loadAs(in, Map.class);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

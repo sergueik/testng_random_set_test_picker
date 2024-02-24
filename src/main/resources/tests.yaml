@@ -1,11 +1,11 @@
 ---
 testOne: false
-testSeven: false
-testThree: true
+testSeven: true
+testThree: false
 testSix: false
-testNine: true
+testNine: false
 testFour: false
-testEight: false
+testEight: true
 testFive: false
-testTwo: false
+testTwo: true
 testTen: true
